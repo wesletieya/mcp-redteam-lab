@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Secrets / env
+.env
+*.key
+
+# Runtime artifacts (recreated by `make eval` / `make data`)
+runtime/
+data/seed/
+data/canaries.json
+results/ci.csv
+results/ablation_anthropic.csv
+
+# Resultats volumineux : on garde les CSV agreges + figures, pas les traces brutes
+runtime_traces/
+
+# OS
+.DS_Store
+Thumbs.db

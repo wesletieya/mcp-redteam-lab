@@ -1,0 +1,58 @@
+[project]
+name = "mcp-redteam-lab"
+version = "0.1.0"
+description = "Banc d'essai reproductible pour mesurer le taux de succes d'attaques (prompt injection) contre un agent MCP, avant/apres defenses en couches."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "eya" }]
+dependencies = [
+    "pyyaml>=6.0",
+    "faker>=25.0",
+    "pandas>=2.0",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+# Fournisseurs de modeles reels (optionnels : le labo tourne hors-ligne avec le provider "mock").
+llm = [
+    "anthropic>=0.40",
+    "langgraph>=0.2",
+    "langchain-core>=0.3",
+]
+dashboard = [
+    "streamlit>=1.37",
+    "plotly>=5.22",
+    "matplotlib>=3.8",
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pre-commit>=3.7",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["agent", "mcp_servers", "defenses", "eval"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_ignores = false
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

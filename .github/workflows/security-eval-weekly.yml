@@ -1,0 +1,51 @@
+name: Eval securite hebdomadaire (modele reel)
+
+# Suite complete sur un modele API, planifiee (pas a chaque PR) pour maitriser le cout.
+# Ne tourne que si le secret ANTHROPIC_API_KEY est configure dans le depot.
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # chaque lundi 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  full-eval:
+    runs-on: ubuntu-latest
+    env:
+      MODEL_PROVIDER: anthropic
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_MODEL: claude-haiku-5-5
+      BUDGET_USD: "2.0"   # plafond de cout par run
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verifier la presence de la cle
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "ANTHROPIC_API_KEY absent : job ignore (configurer le secret pour activer)."
+            exit 0
+          fi
+
+      - name: Installer uv
+        if: env.ANTHROPIC_API_KEY != ''
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.12"
+
+      - name: Dependances
+        if: env.ANTHROPIC_API_KEY != ''
+        run: uv pip install --system -e ".[dev,dashboard,llm]"
+
+      - name: Donnees fictives
+        if: env.ANTHROPIC_API_KEY != ''
+        run: python -m data.generate
+
+      - name: Ablation complete (budget plafonne)
+        if: env.ANTHROPIC_API_KEY != ''
+        run: python -m eval.run --ablation --model anthropic --reps 3 --out results/ablation_anthropic.csv
+
+      - name: Publier les resultats
+        if: env.ANTHROPIC_API_KEY != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ablation-anthropic
+          path: results/ablation_anthropic.csv
