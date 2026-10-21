@@ -12,24 +12,24 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Installer uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          python-version: "3.12"
+        uses: astral-sh/setup-uv@v4
 
-      - name: Dependances
-        run: uv pip install --system -e ".[dev,dashboard]"
+      - name: Environnement + dependances
+        run: |
+          uv venv --python 3.12
+          uv pip install -e ".[dev,dashboard]"
 
       - name: Lint (ruff)
-        run: ruff check .
+        run: uv run ruff check .
 
       - name: Donnees fictives
-        run: python -m data.generate
+        run: uv run python -m data.generate
 
       - name: Tests unitaires
-        run: pytest -q
+        run: uv run python -m pytest -q
 
       # Suite de securite reduite : rejoue l'ablation (none vs all) sur le modele le moins cher
       # (mock, deterministe). Les tests ci-dessus echouent deja si l'ASR 'all' remonte au-dessus
       # de 0 ou si l'utilite baisse -> le badge devient rouge.
       - name: Suite securite reduite
-        run: python -m eval.run --ablation --quick --model mock --reps 1 --out results/ci.csv
+        run: uv run python -m eval.run --ablation --quick --model mock --reps 1 --out results/ci.csv

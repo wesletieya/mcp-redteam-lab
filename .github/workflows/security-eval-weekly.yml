@@ -1,7 +1,7 @@
 name: Eval securite hebdomadaire (modele reel)
 
 # Suite complete sur un modele API, planifiee (pas a chaque PR) pour maitriser le cout.
-# Ne tourne que si le secret ANTHROPIC_API_KEY est configure dans le depot.
+# Ne tourne reellement que si le secret ANTHROPIC_API_KEY est configure dans le depot.
 on:
   schedule:
     - cron: "0 6 * * 1"   # chaque lundi 06:00 UTC
@@ -16,35 +16,39 @@ jobs:
       ANTHROPIC_MODEL: claude-haiku-5-5
       BUDGET_USD: "2.0"   # plafond de cout par run
     steps:
-      - uses: actions/checkout@v4
-
       - name: Verifier la presence de la cle
+        id: guard
         run: |
-          if [ -z "$ANTHROPIC_API_KEY" ]; then
+          if [ -n "${ANTHROPIC_API_KEY}" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
             echo "ANTHROPIC_API_KEY absent : job ignore (configurer le secret pour activer)."
-            exit 0
           fi
 
-      - name: Installer uv
-        if: env.ANTHROPIC_API_KEY != ''
-        uses: astral-sh/setup-uv@v3
-        with:
-          python-version: "3.12"
+      - uses: actions/checkout@v4
+        if: steps.guard.outputs.run == 'true'
 
-      - name: Dependances
-        if: env.ANTHROPIC_API_KEY != ''
-        run: uv pip install --system -e ".[dev,dashboard,llm]"
+      - name: Installer uv
+        if: steps.guard.outputs.run == 'true'
+        uses: astral-sh/setup-uv@v4
+
+      - name: Environnement + dependances
+        if: steps.guard.outputs.run == 'true'
+        run: |
+          uv venv --python 3.12
+          uv pip install -e ".[dev,dashboard,llm]"
 
       - name: Donnees fictives
-        if: env.ANTHROPIC_API_KEY != ''
-        run: python -m data.generate
+        if: steps.guard.outputs.run == 'true'
+        run: uv run python -m data.generate
 
       - name: Ablation complete (budget plafonne)
-        if: env.ANTHROPIC_API_KEY != ''
-        run: python -m eval.run --ablation --model anthropic --reps 3 --out results/ablation_anthropic.csv
+        if: steps.guard.outputs.run == 'true'
+        run: uv run python -m eval.run --ablation --model anthropic --reps 3 --out results/ablation_anthropic.csv
 
       - name: Publier les resultats
-        if: env.ANTHROPIC_API_KEY != ''
+        if: steps.guard.outputs.run == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ablation-anthropic
