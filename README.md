@@ -6,7 +6,7 @@ contre un agent MCP, **avant et après** des défenses en couches, avec des chec
 déterministes (canary tokens + journaux d'appels) et une correspondance OWASP LLM Top 10.
 
 <!-- Remplacer OWNER par votre identifiant GitHub apres creation du depot -->
-![CI sécurité](https://github.com/OWNER/mcp-redteam-lab/actions/workflows/ci.yml/badge.svg)
+![CI sécurité](https://github.com/weletieya/mcp-redteam-lab/actions/workflows/ci.yml/badge.svg)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
