@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import csv
 import os
+import time
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -66,18 +67,30 @@ def run_matrix(configs: list[str], provider: str, reps: int, human: str,
                attacks: list[dict], tasks: dict[str, dict], budget: float) -> list[dict]:
     rows: list[dict] = []
     total_cost = 0.0
+    total = len(configs) * (len(tasks) + len(attacks)) * reps
+    t0 = time.monotonic()
+
+    def _progress(row: dict) -> None:
+        n = len(rows)
+        eta = (time.monotonic() - t0) / n * (total - n)
+        print(f"[{n}/{total}] {row['config']:<12} {row['scenario']:<28} "
+              f"attaque={row['attack_success']!s:<2} utilite={row['utility']} "
+              f"(reste ~{eta / 60:.0f} min)", flush=True)
+
     for label in configs:
         defenses = DefenseConfig.from_label(label, human_profile=human)
         for task in tasks.values():  # utilite sans attaque
             for rep in range(reps):
                 row = run_one(provider, label, defenses, task, None, rep)
                 rows.append(row)
+                _progress(row)
                 total_cost += row["cost_usd"]
         for sc in attacks:  # scenarios d'attaque
             task = tasks[sc["user_task"]]
             for rep in range(reps):
                 row = run_one(provider, label, defenses, task, sc, rep)
                 rows.append(row)
+                _progress(row)
                 total_cost += row["cost_usd"]
                 if budget > 0 and total_cost > budget:
                     print(f"[budget] plafond {budget} USD atteint, arret anticipe.")

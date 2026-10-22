@@ -7,6 +7,7 @@ journalise dans audit.jsonl."""
 
 from __future__ import annotations
 
+import inspect
 import json
 from dataclasses import dataclass, field
 
@@ -73,6 +74,12 @@ class Toolbox:
 
         if tool not in _REGISTRY:
             return self._blocked(tool, args, None, {"error": f"Outil inconnu : {tool}"})
+
+        # Arguments hors schema (frequent avec un vrai LLM) : erreur renvoyee a l'agent.
+        try:
+            inspect.signature(_REGISTRY[tool][1]).bind(self.env, **args)
+        except TypeError as exc:
+            return self._blocked(tool, args, None, {"error": f"Arguments invalides pour {tool} : {exc}"})
 
         # D6 : plan fige.
         if self.defenses.d6_planner and not planner.call_allowed(self.plan, self.called, tool):
