@@ -36,6 +36,19 @@ Provider déterministe `mock`, **8 scénarios × 11 configurations × 3 répéti
 3. **L'attaque adaptative inverse le classement** — mesurer l'ASR *statique ET adaptatif*,
    sinon on surestime la robustesse.
 
+### Premier run sur un vrai modèle (exploratoire)
+
+Ollama `qwen2.5:7b-instruct` en local, run court (5 attaques, configs `none`/`all`, 1 répétition) :
+
+| Configuration | ASR | Utilité |
+|---|---:|---:|
+| Aucune défense | **20 %** (1/5) | 71 % (5/7) |
+| Défense en couches (toutes) | **0 %** (0/5) | 71 % (5/7) |
+
+Le vrai modèle est bien moins injectable que le mock (pire cas par construction) : seule la
+recommandation piégée dans un document passe, et la pile complète la bloque sans perte
+d'utilité. Échantillon trop petit pour conclure (n = 1) — l'ablation complète reste à faire.
+
 Détail complet : [docs/findings.md](docs/findings.md).
 
 ## Architecture
@@ -90,7 +103,9 @@ Avec `make` : `make up`, `make test`, `make ablation`, `make figures`, `make das
 
 **Mesure avec un vrai modèle** : copier `.env.example` en `.env`, renseigner
 `MODEL_PROVIDER=anthropic` + `ANTHROPIC_API_KEY` (ou `ollama` + `OLLAMA_MODEL`), puis
-`python -m eval.run --ablation --model anthropic`.
+`python -m eval.run --ablation --model anthropic`. En local avec Ollama :
+`OLLAMA_MODEL=qwen2.5:7b-instruct python -m eval.run --ablation --model ollama --reps 3 --out results/ablation_ollama.csv`
+(la progression et l'ETA s'affichent épisode par épisode).
 
 ## Méthodologie
 
@@ -107,7 +122,7 @@ Avec `make` : `make up`, `make test`, `make ablation`, `make figures`, `make das
 
 Socle initial : 8 attaques / 7 tâches (le plan vise ~60 / ~30 — le harness passe à l'échelle
 sans changement de code). Les chiffres `mock` montrent la **structure** des défenses, pas la
-variabilité d'un vrai LLM. Attaques adaptatives limitées à l'encodage base64. Voir
+variabilité d'un vrai LLM ; le run réel Ollama n'est pour l'instant qu'exploratoire (n = 1). Attaques adaptatives limitées à l'encodage base64. Voir
 [docs/findings.md](docs/findings.md#limites-de-ce-socle).
 
 ## Références
